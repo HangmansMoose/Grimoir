@@ -1,0 +1,11 @@
+HTTP/1.1 426 Upgrade Required
+Date: Thu, 30 Jan 2025 05:04:39 GMT
+Connection: close
+Content-Length: 165
+Content-Type: text/plain; charset=utf-8
+Upgrade: websocket
+Server: Python/3.12 websockets/14.2
+
+Failed to open a WebSocket connection: invalid Connection header: close.
+
+You cannot access a WebSocket server directly with a browser. You need a WebSocket client.

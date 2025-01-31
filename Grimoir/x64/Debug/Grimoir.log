@@ -1,2 +1,3 @@
 ﻿  main.cpp
+G:\Code\Grimoir\src\main.cpp(333,13): warning C4018: '<': signed/unsigned mismatch
   Grimoir.vcxproj -> G:\Code\Grimoir\x64\Debug\Grimoir.exe
