@@ -1,4 +1,7 @@
-#define WIN32_LEAN_AND_MEAN
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#ifndef WIN32_LEAN_AND_MEAN
+	#define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
 #include <winsock2.h>
 #define SECURITY_WIN32
@@ -6,25 +9,22 @@
 #include <schannel.h>
 #include <shlwapi.h>
 #include <assert.h>
-#include <stdio.h>
-#include <memory>
-#include <thread>
-
-#include "TLS.h"
 #include "WebSocket.h"
 
+bool WebSocket::Init()
+{
+	WSADATA wsadata;
+	if (WSAStartup(MAKEWORD(2, 2), &wsadata) != 0)
+	{
+        return false;
+	}
 
+	return true;
+}
 
-
-// returns 0 on success or negative value on error
-static int tls_connect(tls_socket* s, const char* hostname, unsigned short port)
+int WebSocket::tls_connect(tls_socket* s, const char* hostname, unsigned short port)
 {
    // initialize windows sockets
-   WSADATA wsadata;
-   if (WSAStartup(MAKEWORD(2, 2), &wsadata) != 0)
-   {
-       return -1;
-   }
 
    // create TCP IPv4 socket
    s->socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -201,7 +201,7 @@ static int tls_connect(tls_socket* s, const char* hostname, unsigned short port)
 }
 
 // disconnects socket & releases resources (call this even if tls_write/tls_read function return error)
-static void tls_disconnect(tls_socket* s)
+void WebSocket::tls_disconnect(tls_socket* s)
 {
    DWORD type = SCHANNEL_SHUTDOWN;
 
@@ -244,7 +244,7 @@ static void tls_disconnect(tls_socket* s)
 }
 
 // returns 0 on success or negative value on error
-static int tls_write(tls_socket* s, const void* buffer, int size)
+int WebSocket::tls_write(tls_socket* s, const void* buffer, int size)
 {
    while (size != 0)
    {
@@ -296,7 +296,7 @@ static int tls_write(tls_socket* s, const void* buffer, int size)
 
 // blocking read, waits & reads up to size bytes, returns amount of bytes received on success (<= size)
 // returns 0 on disconnect or negative value on error
-static int tls_read(tls_socket* s, void* buffer, int size)
+int WebSocket::tls_read(tls_socket* s, void* buffer, int size)
 {
    int result = 0;
 
@@ -407,63 +407,4 @@ static int tls_read(tls_socket* s, void* buffer, int size)
    }
 
    return result;
-}
-
-int main()
-{
-   const char* hostname = "www.google.com";
-   //const char* hostname = "badssl.com";
-   //const char* hostname = "expired.badssl.com";
-   //const char* hostname = "wrong.host.badssl.com";
-   //const char* hostname = "self-signed.badssl.com";
-   //const char* hostname = "untrusted-root.badssl.com";
-   const char* path = "/";
-
-   tls_socket s;
-   if (tls_connect(&s, hostname, 443) != 0)
-   {
-       printf("Error connecting to %s\n", hostname);
-       return -1;
-   }
-
-   printf("Connected!\n");
-
-   // send request
-   char req[1024];
-   int len = sprintf(req, "GET / HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", hostname);
-   if (tls_write(&s, req, len) != 0)
-   {
-       tls_disconnect(&s);
-       return -1;
-   }
-
-   // write response to file
-   FILE* f = fopen("response.txt", "wb");
-   int received = 0;
-   for (;;)
-   {
-       char buf[65536];
-       int r = tls_read(&s, buf, sizeof(buf));
-       if (r < 0)
-       {
-           printf("Error receiving data\n");
-           break;
-       }
-       else if (r == 0)
-       {
-           printf("Socket disconnected\n");
-           break;
-       }
-       else
-       {
-           fwrite(buf, 1, r, f);
-           fflush(f);
-           received += r;
-       }
-   }
-   fclose(f);
-
-   printf("Received %d bytes\n", received);
-
-   tls_disconnect(&s);
 }
