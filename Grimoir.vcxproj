@@ -131,10 +131,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Crypt.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\WebSocket.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Crypt.h" />
     <ClInclude Include="src\WebSocket.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
